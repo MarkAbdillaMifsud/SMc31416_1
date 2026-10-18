@@ -43,6 +43,9 @@ public:
 	UFUNCTION()
 	void GiveItem(UItemDefinition* ItemDefinition);
 
+	UFUNCTION()
+	FVector GetCameraTargetLocation();
+
 
 protected:
 	// Called when the game starts or when spawned
