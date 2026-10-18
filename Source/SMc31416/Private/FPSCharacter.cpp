@@ -3,6 +3,10 @@
 
 #include "FPSCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Animation/AnimBlueprint.h"
+#include "InventoryComponent.h"
+#include "EquippableToolDefinition.h"
+#include "EquippableToolBase.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -17,6 +21,8 @@ AFPSCharacter::AFPSCharacter()
 	// Create a first person mesh component for the owning player
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	check(FirstPersonMeshComponent != nullptr);
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 	// Attach the first person mesh to the skeletal mesh
 	FirstPersonMeshComponent->SetupAttachment(GetMesh());
@@ -110,6 +116,75 @@ void AFPSCharacter::Look(const FInputActionValue& Value) {
 	if (Controller) {
 		AddControllerYawInput(LookAxisValue.X);
 		AddControllerPitchInput(LookAxisValue.Y);
+	}
+}
+
+bool AFPSCharacter::IsToolAlreadyOwned(UEquippableToolDefinition* ToolDefinition)
+{
+	// Check that the character does not yet have this particular tool
+	for (UEquippableToolDefinition* InventoryItem : InventoryComponent->ToolInventory)
+	{
+		if (ToolDefinition->ID == InventoryItem->ID)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void AFPSCharacter::AttachTool(UEquippableToolDefinition* ToolDefinition) {
+	if (!IsToolAlreadyOwned(ToolDefinition))
+	{
+		AEquippableToolBase* ToolToEquip = GetWorld()->SpawnActor<AEquippableToolBase>(ToolDefinition->ToolAsset, this->GetActorTransform());
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+
+		ToolToEquip->AttachToActor(this, AttachmentRules);
+		ToolToEquip->AttachToComponent(FirstPersonMeshComponent, AttachmentRules, FName(TEXT("HandGrip_R")));
+
+		FirstPersonMeshComponent->SetAnimInstanceClass(ToolToEquip->FirstPersonToolAnim->GeneratedClass);
+		GetMesh()->SetAnimInstanceClass(ToolToEquip->ThirdPersonToolAnim->GeneratedClass);
+
+		InventoryComponent->ToolInventory.Add(ToolDefinition);
+		ToolToEquip->OwningCharacter = this;
+
+		EquippedTool = ToolToEquip;
+
+		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->AddMappingContext(ToolToEquip->ToolMappingContext, 1);
+			}
+			ToolToEquip->BindInputAction(UseAction);
+		}
+	}
+}
+
+void AFPSCharacter::GiveItem(UItemDefinition* ItemDefinition)
+{
+	switch (ItemDefinition->ItemType)
+	{
+		case EItemType::Tool:
+		{
+			UEquippableToolDefinition* ToolDefinition = Cast<UEquippableToolDefinition>(ItemDefinition);
+
+			if (ToolDefinition != nullptr)
+			{
+				AttachTool(ToolDefinition);
+			}
+			else {
+
+			}
+			break;
+		}
+		case EItemType::Consumable:
+		{
+			// Not yet implemented
+			break;
+		}
+		default:
+			break;
 	}
 }
 

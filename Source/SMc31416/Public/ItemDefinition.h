@@ -28,4 +28,7 @@ class SMC31416_API UItemDefinition : public UDataAsset
 
 		UPROPERTY(EditAnywhere, Category = "Item Data")
 		TSoftObjectPtr<UStaticMesh> WorldMesh;
+
+		virtual UItemDefinition* CreateItemCopy(UObject* Outer) const;
+
 };

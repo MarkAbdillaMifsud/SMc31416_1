@@ -82,11 +82,7 @@ void APickupBase::InitializePickup()
 			return;
 		}
 
-		ReferenceItem = NewObject<UItemDefinition>(this);
-		ReferenceItem->ID = ItemDataRow->ID;
-		ReferenceItem->ItemType = ItemDataRow->ItemType;
-		ReferenceItem->ItemText = ItemDataRow->ItemText;
-		ReferenceItem->WorldMesh = TempItemDefinition->WorldMesh;
+		ReferenceItem = TempItemDefinition->CreateItemCopy(GetTransientPackage());
 
 		UStaticMesh* LoadedMesh = TempItemDefinition->WorldMesh.IsValid()
 			? TempItemDefinition->WorldMesh.Get()
@@ -108,6 +104,8 @@ void APickupBase::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 
 	AFPSCharacter* Character = Cast<AFPSCharacter>(OtherActor);
 	if (Character != nullptr) {
+		Character->GiveItem(ReferenceItem);
+
 		PickupMeshComponent->SetVisibility(false);
 		PickupMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);

@@ -14,6 +14,10 @@ class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
 class UCameraComponent;
+class UItemDefinition;
+class AEquippableToolBase;
+class UEquippableToolDefinition;
+class UInventoryComponent;
 
 UCLASS()
 class SMC31416_API AFPSCharacter : public ACharacter
@@ -26,6 +30,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Animation)
 	TObjectPtr<UAnimBlueprint> FirstPersonDefaultAnim;
+
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+
+	UFUNCTION()
+	bool IsToolAlreadyOwned(UEquippableToolDefinition* ToolDefinition);
+
+	UFUNCTION()
+	void AttachTool(UEquippableToolDefinition* ToolDefinition);
+
+	UFUNCTION()
+	void GiveItem(UItemDefinition* ItemDefinition);
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,6 +62,12 @@ protected:
 	// Look Input Actions
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tools")
+	TObjectPtr<AEquippableToolBase> EquippedTool;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> UseAction;
 
 public:	
 	// Called every frame
